@@ -48,7 +48,7 @@ func main() {
 		item := p.PlayRandomItem()
 		dur := p.PickRandomPlayDuration()
 		durT := fmt.Sprintf("%02d:%02d", int(dur.Minutes()), int(dur.Seconds())%60)
-		start := p.SeekToRandomPosition(item, dur)
+		start := p.SeekToRandomPosition(dur)
 		startT := fmt.Sprintf("%02d:%02d", start/60, start%60)
 		end := start + int(dur.Seconds())
 		endT := fmt.Sprintf("%02d:%02d", end/60, end%60)

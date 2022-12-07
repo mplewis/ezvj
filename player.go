@@ -72,9 +72,19 @@ func (p Player) PickRandomPlayDuration() time.Duration {
 	return time.Duration(dur)
 }
 
-func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Duration) int {
-	start := int(float64(item.Duration) * p.Config.ExcludeStart)
-	end := item.Duration - int(float64(item.Duration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
+func (p Player) SeekToRandomPosition(playDuration time.Duration) int {
+	// HACK: we have to wait for the video to load before duration is available
+	var itemDuration int
+	for itemDuration == 0 {
+		time.Sleep(100 * time.Millisecond)
+		s, _ := p.VLC.GetStatus() // HACK: this throws an error every time, but s.Length is still accurate
+		itemDuration = int(s.Length)
+	}
+	start := int(float64(itemDuration) * p.Config.ExcludeStart)
+	end := itemDuration - int(float64(itemDuration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
+	if end-start < 0 {
+		panic("end-start < 0")
+	}
 	pos := rand.Intn(end-start) + start
 	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
 
