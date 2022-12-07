@@ -28,6 +28,23 @@ type Config struct {
 	ExcludeEnd      float64       `figyr:"default=0.1,description=Exclude this percentage of the video from playing at the end"`
 }
 
+type PlaylistItem struct {
+	Name     string
+	ID       int
+	Duration int
+}
+
+type Player struct {
+	vlcctrl.VLC
+	Config
+}
+
+func NewPlayer(cfg Config) Player {
+	v, err := vlcctrl.NewVLC(cfg.VLCHost, cfg.VLCPort, cfg.VLCPassword)
+	check(err)
+	return Player{VLC: v, Config: cfg}
+}
+
 func check(err error) {
 	if err != nil {
 		panic(err)
@@ -47,20 +64,14 @@ func listFiles(dir string) []string {
 	return files
 }
 
-func add(v vlcctrl.VLC, cfg Config, f string) {
-	path := fmt.Sprintf("file://%s", url.PathEscape(path.Join(cfg.VideoDir, f)))
+func (p Player) Add(f string) {
+	path := fmt.Sprintf("file://%s", url.PathEscape(path.Join(p.Config.VideoDir, f)))
 	fmt.Println(path)
-	check(v.Add(path))
+	check(p.VLC.Add(path))
 }
 
-type PlaylistItem struct {
-	Name     string
-	ID       int
-	Duration int
-}
-
-func playlist(v vlcctrl.VLC) []PlaylistItem {
-	root, err := v.Playlist()
+func (p Player) playlist() []PlaylistItem {
+	root, err := p.VLC.Playlist()
 	check(err)
 
 	var pl vlcctrl.Node
@@ -88,31 +99,27 @@ func playlist(v vlcctrl.VLC) []PlaylistItem {
 	return items
 }
 
-func playRandomItem(v vlcctrl.VLC) {
-	pl := playlist(v)
+func (p Player) PlayRandomItem() {
+	pl := p.playlist()
 	i := rand.Intn(len(pl))
 	item := pl[i]
 	pp.Println(item)
-	check(v.Play(item.ID))
+	check(p.VLC.Play(item.ID))
+	check(p.VLC.SelectSubtitleTrack(2)) // this is usually english subtitles
 }
 
 func main() {
 	var cfg Config
 	figyr.New(desc).MustParse(&cfg)
-	pp.Println(cfg)
+	p := NewPlayer(cfg)
 
-	// seed rng with system time
 	rand.Seed(time.Now().UnixNano())
 
-	v, err := vlcctrl.NewVLC(cfg.VLCHost, cfg.VLCPort, cfg.VLCPassword)
-	check(err)
-
-	check(v.EmptyPlaylist())
+	check(p.VLC.EmptyPlaylist())
 	files := listFiles(cfg.VideoDir)
 	for _, f := range files {
-		add(v, cfg, f)
+		p.Add(f)
 	}
 
-	playRandomItem(v)
-	check(v.SelectSubtitleTrack(2)) // this is usually english subtitles
+	p.PlayRandomItem()
 }
