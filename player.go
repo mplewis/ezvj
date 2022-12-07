@@ -80,8 +80,8 @@ func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Durati
 	// HACK: ensure VLC actually seeks to the position we want
 	var actual int
 	for {
-		time.Sleep(100 * time.Millisecond) // if we don't wait, VLC will lie and say it seeked when the file wasn't yet open
-		s, _ := p.VLC.GetStatus()          // HACK: this throws an error every time, but s.Time is still accurate
+		time.Sleep(1 * time.Second) // if we don't wait, VLC will lie and say it seeked when the file wasn't yet open
+		s, _ := p.VLC.GetStatus()   // HACK: this throws an error every time, but s.Time is still accurate
 		actual = int(s.Time)
 		if actual >= pos {
 			break

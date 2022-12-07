@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"time"
@@ -42,11 +43,20 @@ func main() {
 		log.Printf("Added to playlist: %s\n", f)
 	}
 
+	fs := false
 	for {
 		item := p.PlayRandomItem()
 		dur := p.PickRandomPlayDuration()
-		pos := p.SeekToRandomPosition(item, dur)
-		log.Printf("Playing %s for %d seconds at pos %d\n", item.Name, int(dur.Seconds()), pos)
+		durT := fmt.Sprintf("%02d:%02d", int(dur.Minutes()), int(dur.Seconds())%60)
+		start := p.SeekToRandomPosition(item, dur)
+		startT := fmt.Sprintf("%02d:%02d", start/60, start%60)
+		end := start + int(dur.Seconds())
+		endT := fmt.Sprintf("%02d:%02d", end/60, end%60)
+		log.Printf("Now playing: %s: %s-%s (%s)\n", item.Name, startT, endT, durT)
+		if !fs {
+			check(p.VLC.ToggleFullscreen()) // HACK: right now we cannot check for fullscreen mode
+			fs = true
+		}
 		time.Sleep(dur)
 	}
 }
