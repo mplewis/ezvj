@@ -99,13 +99,27 @@ func (p Player) playlist() []PlaylistItem {
 	return items
 }
 
-func (p Player) PlayRandomItem() {
+func (p Player) PlayRandomItem() PlaylistItem {
 	pl := p.playlist()
 	i := rand.Intn(len(pl))
 	item := pl[i]
-	pp.Println(item)
 	check(p.VLC.Play(item.ID))
 	check(p.VLC.SelectSubtitleTrack(2)) // this is usually english subtitles
+	return item
+}
+
+func (p Player) PickRandomPlayDuration() time.Duration {
+	min := int(p.Config.PlayDurationMin.Nanoseconds())
+	max := int(p.Config.PlayDurationMax.Nanoseconds())
+	dur := rand.Intn(max-min) + min
+	return time.Duration(dur)
+}
+
+func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Duration) {
+	start := int(float64(item.Duration) * p.Config.ExcludeStart)
+	end := item.Duration - int(float64(item.Duration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
+	pos := rand.Intn(end-start) + start
+	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
 }
 
 func main() {
@@ -121,5 +135,8 @@ func main() {
 		p.Add(f)
 	}
 
-	p.PlayRandomItem()
+	item := p.PlayRandomItem()
+	dur := p.PickRandomPlayDuration()
+	pp.Println(dur.Seconds())
+	p.SeekToRandomPosition(item, dur)
 }
