@@ -34,8 +34,12 @@ func main() {
 
 	var cfg Config
 	figyr.New(desc).MustParse(&cfg)
-	p := NewPlayer(cfg)
+	log.Printf("VLC host: %s:%d\n", cfg.VLCHost, cfg.VLCPort)
+	log.Printf("Video directory: %s\n", cfg.VideoDir)
+	log.Printf("Play duration: %s to %s\n", cfg.PlayDurationMin, cfg.PlayDurationMax)
+	log.Printf("Exclude: before %d%%, after %d%%\n", int(cfg.ExcludeStart*100), int((1-cfg.ExcludeEnd)*100))
 
+	p := NewPlayer(cfg)
 	check(p.VLC.EmptyPlaylist())
 	files := listFiles(cfg.VideoDir)
 	for _, f := range files {
