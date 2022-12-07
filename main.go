@@ -1,16 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
-	"net/url"
-	"os"
-	"path"
-	"strconv"
 	"time"
 
-	vlcctrl "github.com/CedArctic/go-vlc-ctrl"
-	"github.com/k0kubun/pp/v3"
 	"github.com/mplewis/figyr"
 )
 
@@ -34,112 +28,25 @@ type PlaylistItem struct {
 	Duration int
 }
 
-type Player struct {
-	vlcctrl.VLC
-	Config
-}
-
-func NewPlayer(cfg Config) Player {
-	v, err := vlcctrl.NewVLC(cfg.VLCHost, cfg.VLCPort, cfg.VLCPassword)
-	check(err)
-	return Player{VLC: v, Config: cfg}
-}
-
-func check(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
-
-func listFiles(dir string) []string {
-	fs, err := os.ReadDir(dir)
-	check(err)
-	var files []string
-	for _, f := range fs {
-		if f.IsDir() {
-			continue
-		}
-		files = append(files, f.Name())
-	}
-	return files
-}
-
-func (p Player) Add(f string) {
-	path := fmt.Sprintf("file://%s", url.PathEscape(path.Join(p.Config.VideoDir, f)))
-	check(p.VLC.Add(path))
-}
-
-func (p Player) playlist() []PlaylistItem {
-	root, err := p.VLC.Playlist()
-	check(err)
-
-	var pl vlcctrl.Node
-	for _, n := range root.Children {
-		if n.Name == "Playlist" {
-			pl = n
-			break
-		}
-	}
-	if pl.Name == "" {
-		panic("no playlist")
-	}
-
-	items := make([]PlaylistItem, len(pl.Children))
-	for i, n := range pl.Children {
-		if n.Type != "leaf" {
-			continue
-		}
-		id, err := strconv.Atoi(n.ID)
-		check(err)
-		item := PlaylistItem{Name: n.Name, ID: id, Duration: n.Duration}
-		items[i] = item
-	}
-	return items
-}
-
-func (p Player) PlayRandomItem() PlaylistItem {
-	pl := p.playlist()
-	i := rand.Intn(len(pl))
-	item := pl[i]
-	check(p.VLC.Play(item.ID))
-	check(p.VLC.SelectSubtitleTrack(2)) // this is usually english subtitles
-	return item
-}
-
-func (p Player) PickRandomPlayDuration() time.Duration {
-	min := int(p.Config.PlayDurationMin.Nanoseconds())
-	max := int(p.Config.PlayDurationMax.Nanoseconds())
-	dur := rand.Intn(max-min) + min
-	return time.Duration(dur)
-}
-
-func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Duration) int {
-	start := int(float64(item.Duration) * p.Config.ExcludeStart)
-	end := item.Duration - int(float64(item.Duration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
-	pos := rand.Intn(end-start) + start
-	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
-	return pos
-}
-
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	var cfg Config
 	figyr.New(desc).MustParse(&cfg)
-	pp.Println(cfg)
 	p := NewPlayer(cfg)
 
 	check(p.VLC.EmptyPlaylist())
 	files := listFiles(cfg.VideoDir)
 	for _, f := range files {
 		p.Add(f)
+		log.Printf("Added to playlist: %s\n", f)
 	}
 
 	for {
 		item := p.PlayRandomItem()
 		dur := p.PickRandomPlayDuration()
 		pos := p.SeekToRandomPosition(item, dur)
-		fmt.Printf("Playing %s for %d seconds at pos %d\n", item.Name, int(dur.Seconds()), pos)
+		log.Printf("Playing %s for %d seconds at pos %d\n", item.Name, int(dur.Seconds()), pos)
 		time.Sleep(dur)
 	}
 }

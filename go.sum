@@ -18,6 +18,8 @@ github.com/mitchellh/go-wordwrap v1.0.1 h1:TLuKupo69TCn6TQSyGxwI1EblZZEsQ0vMlAFQ
 github.com/mitchellh/go-wordwrap v1.0.1/go.mod h1:R62XHJLzvMFRBbcrT7m7WgmE1eOyTSsCt+hzestvNj0=
 github.com/mplewis/figyr v0.0.0-20220909054156-090d08cfc213 h1:nbbSssb79RMNtEWkBmHyK4qgWNgiIQ2aawofvF0l9RA=
 github.com/mplewis/figyr v0.0.0-20220909054156-090d08cfc213/go.mod h1:1sforiNBsRxBTkW+jGUI3p6/0xAsT2QcSuowYPb64V8=
+github.com/mplewis/figyr v0.0.0-20221207034834-4962d785d90f h1:F0hU0n6WffpfRretGdsHvWF57qmBFjl/dHgoKOZEjKM=
+github.com/mplewis/figyr v0.0.0-20221207034834-4962d785d90f/go.mod h1:1sforiNBsRxBTkW+jGUI3p6/0xAsT2QcSuowYPb64V8=
 github.com/onsi/ginkgo/v2 v2.1.4 h1:GNapqRSid3zijZ9H77KrgVG4/8KqiyRsxcSxe+7ApXY=
 github.com/onsi/gomega v1.20.0 h1:8W0cWlwFkflGPLltQvLRB7ZVD5HuP6ng320w2IS245Q=
 github.com/pkg/diff v0.0.0-20210226163009-20ebb0f2a09e/go.mod h1:pJLUxLENpZxwdsKMEsNbx1VGcRFpLqf3715MtcvvzbA=

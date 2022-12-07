@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/k0kubun/pp/v3 v3.2.0
-	github.com/mplewis/figyr v0.0.0-20220909054156-090d08cfc213
+	github.com/mplewis/figyr v0.0.0-20221207034834-4962d785d90f
 )
 
 require (
