@@ -66,7 +66,6 @@ func listFiles(dir string) []string {
 
 func (p Player) Add(f string) {
 	path := fmt.Sprintf("file://%s", url.PathEscape(path.Join(p.Config.VideoDir, f)))
-	fmt.Println(path)
 	check(p.VLC.Add(path))
 }
 
@@ -90,7 +89,6 @@ func (p Player) playlist() []PlaylistItem {
 		if n.Type != "leaf" {
 			continue
 		}
-		pp.Println(n)
 		id, err := strconv.Atoi(n.ID)
 		check(err)
 		item := PlaylistItem{Name: n.Name, ID: id, Duration: n.Duration}
@@ -115,19 +113,21 @@ func (p Player) PickRandomPlayDuration() time.Duration {
 	return time.Duration(dur)
 }
 
-func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Duration) {
+func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Duration) int {
 	start := int(float64(item.Duration) * p.Config.ExcludeStart)
 	end := item.Duration - int(float64(item.Duration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
 	pos := rand.Intn(end-start) + start
 	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
+	return pos
 }
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
+
 	var cfg Config
 	figyr.New(desc).MustParse(&cfg)
+	pp.Println(cfg)
 	p := NewPlayer(cfg)
-
-	rand.Seed(time.Now().UnixNano())
 
 	check(p.VLC.EmptyPlaylist())
 	files := listFiles(cfg.VideoDir)
@@ -135,8 +135,11 @@ func main() {
 		p.Add(f)
 	}
 
-	item := p.PlayRandomItem()
-	dur := p.PickRandomPlayDuration()
-	pp.Println(dur.Seconds())
-	p.SeekToRandomPosition(item, dur)
+	for {
+		item := p.PlayRandomItem()
+		dur := p.PickRandomPlayDuration()
+		pos := p.SeekToRandomPosition(item, dur)
+		fmt.Printf("Playing %s for %d seconds at pos %d\n", item.Name, int(dur.Seconds()), pos)
+		time.Sleep(dur)
+	}
 }
