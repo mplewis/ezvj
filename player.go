@@ -82,9 +82,6 @@ func (p Player) SeekToRandomPosition(playDuration time.Duration) int {
 	}
 	start := int(float64(itemDuration) * p.Config.ExcludeStart)
 	end := itemDuration - int(float64(itemDuration)*p.Config.ExcludeEnd) - int(playDuration.Seconds())
-	if end-start < 0 {
-		panic("end-start < 0")
-	}
 	pos := rand.Intn(end-start) + start
 	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
 
