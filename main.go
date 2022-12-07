@@ -53,9 +53,13 @@ func main() {
 		end := start + int(dur.Seconds())
 		endT := fmt.Sprintf("%02d:%02d", end/60, end%60)
 		log.Printf("Now playing: %s: %s-%s (%s)\n", item.Name, startT, endT, durT)
+
 		if !fs {
-			check(p.VLC.ToggleFullscreen()) // HACK: right now we cannot check for fullscreen mode
 			fs = true
+			go func() {
+				time.Sleep(5 * time.Second)     // HACK: we have to wait until the video is definitely playing to fs it
+				check(p.VLC.ToggleFullscreen()) // HACK: right now we cannot check for fullscreen mode
+			}()
 		}
 		time.Sleep(dur)
 	}

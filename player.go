@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"net/url"
 	"path"
@@ -78,16 +79,18 @@ func (p Player) SeekToRandomPosition(item PlaylistItem, playDuration time.Durati
 	check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
 
 	// HACK: ensure VLC actually seeks to the position we want
-	var actual int
-	for {
-		time.Sleep(1 * time.Second) // if we don't wait, VLC will lie and say it seeked when the file wasn't yet open
-		s, _ := p.VLC.GetStatus()   // HACK: this throws an error every time, but s.Time is still accurate
-		actual = int(s.Time)
-		if actual >= pos {
-			break
+	go func() {
+		// VLC can take a few seconds to load a video - keep checking for up to 15 seconds
+		attemptFor := time.Duration(math.Min(15, playDuration.Seconds())) * time.Second
+		startChecking := time.Now()
+		for time.Since(startChecking) < attemptFor {
+			time.Sleep(100 * time.Millisecond) // if we don't wait, VLC will lie and say it seeked when the file wasn't yet open
+			s, _ := p.VLC.GetStatus()          // HACK: this throws an error every time, but s.Time is still accurate
+			if s.Time < uint(attemptFor.Seconds()) {
+				check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
+			}
 		}
-		check(p.VLC.Seek(fmt.Sprintf("%ds", pos)))
-	}
+	}()
 
 	return pos
 }
